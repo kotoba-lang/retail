@@ -26,3 +26,23 @@
     (is (= 900 (:receipt/net r)))
     (is (= 50 (:receipt/tax r)))
     (is (= 950 (:receipt/total r)))))
+
+(deftest ean13-edge-cases
+  (testing "13-digit exactly is accepted when checksum valid"
+    (is (retail/ean13-valid? "4006381333931")))
+  (testing "12 digits is too short"
+    (is (not (retail/ean13-valid? "400638133393"))))
+  (testing "14 digits is too long"
+    (is (not (retail/ean13-valid? "40063813339311"))))
+  (testing "non-string is rejected"
+    (is (not (retail/ean13-valid? nil)))))
+
+(deftest inventory-edge-cases
+  (testing "no reorder point means no reorder"
+    (is (not (retail/needs-reorder? (retail/inventory "S1" "L1" 0)))))
+  (testing "exactly at reorder point triggers reorder"
+    (is (retail/needs-reorder? (retail/inventory "S1" "L1" 5 :reorder-at 5))))
+  (testing "empty receipt totals zero"
+    (let [r (retail/receipt "R1" [])]
+      (is (zero? (:receipt/net r)))
+      (is (zero? (:receipt/total r))))))
