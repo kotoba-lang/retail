@@ -23,6 +23,36 @@ Portable `.cljc` across JVM / ClojureScript / SCI / GraalVM.
 (retail/receipt "R1" [(retail/line-item "S1" 200 2)])
 ```
 
+## Operator console (UI/UX)
+
+A read-only HTML dashboard renders inventory (with reorder warnings) and receipts for an operator. Built on
+[`kotoba-lang/html`](https://github.com/kotoba-lang/html) (Hiccup→HTML) +
+[`kotoba-lang/css`](https://github.com/kotoba-lang/css) (EDN→CSS). Pure data
+→ markup; the console never exposes a write surface (no `<form>`/`<button>`)
+— writes stay behind the governor.
+
+```clojure
+(require '[kotoba.retail.ui :as ui])
+
+(ui/dashboard
+  {:inventories [(ret/inventory "S1" "L1" 3 :reorder-at 5)]
+   :receipts [(ret/receipt "R1" [(ret/line-item "S1" 200 2)])]})
+;; => "<html>...read-only · governor-gated...</html>"
+```
+
+## Export (CSV / JSON)
+
+Audit-grade CSV (RFC-4180 quoting) and JSON (quote/backslash/newline
+escaped) for inventory (reorder flag) and receipts.
+
+```clojure
+(require '[kotoba.retail.export :as ex])
+
+(ex/inventory->csv inventories)   ; flags reorder
+(ex/receipts->csv receipts)     ; net/tax/total
+(ex/inventory->json inventories)
+```
+
 ## License
 
 Apache License 2.0.
