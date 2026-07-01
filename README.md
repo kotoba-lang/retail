@@ -67,3 +67,9 @@ escaped) for inventory (reorder flag) and receipts.
 ## License
 
 Apache License 2.0.
+
+## Test
+
+```bash
+clojure -M:test
+```
