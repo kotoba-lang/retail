@@ -20,6 +20,16 @@
       (is (re-find #"receipt_id,net,tax,total,currency,items" csv))
       (is (re-find #"R1," csv)))))
 
+(deftest csv-export-quotes-a-bare-carriage-return
+  ;; RFC 4180 requires quoting a field containing CR, LF, or a comma --
+  ;; \r alone is also a line terminator every standard CSV reader
+  ;; recognizes, but the check here only ever covered \n. Verified
+  ;; against Python's csv module: an unquoted bare \r split the row into
+  ;; two corrupted rows on read-back.
+  (let [rs [(ret/receipt (str "R" (char 13) "1") [])]
+        csv (ex/receipts->csv rs)]
+    (is (str/includes? csv "\"R\r1\""))))
+
 (deftest json-export
   (testing "inventory JSON is a boolean-carrying array"
     (let [j (ex/inventory->json invs)]
