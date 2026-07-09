@@ -1,5 +1,6 @@
 (ns kotoba.retail.export-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
             [kotoba.retail :as ret]
             [kotoba.retail.export :as ex]))
 
@@ -29,3 +30,12 @@
     (let [j (ex/receipts->json receipts)]
       (is (re-find #"\"receipt_id\":\"R1\"" j))
       (is (re-find #"\"items\":1" j)))))
+
+(deftest json-export-escapes-every-c0-control-character
+  ;; RFC 8259 requires EVERY control character U+0000-U+001F to be
+  ;; escaped, not just \ " and \n -- a receipt id containing a raw tab or
+  ;; other control byte would otherwise be copied through raw, producing
+  ;; invalid JSON (verified against Python's strict json module).
+  (let [rs [(ret/receipt (str "R" (char 9) "1" (char 1) "x") [])]
+        j (ex/receipts->json rs)]
+    (is (str/includes? j "\"receipt_id\":\"R\\t1\\u0001x\""))))
